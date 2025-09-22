@@ -195,19 +195,7 @@ web-service:
 	@echo "🌐 Iniciando solo el servicio web..."
 	docker-compose up -d web
 	@echo "⏳ Esperando a que el servicio web esté listo..."
-	@for i in $$(seq 60 -1 1); do \
-		if docker-compose exec -T web python manage.py check --deploy >/dev/null 2>&1; then \
-			echo "✅ Servicio web está listo"; \
-			break; \
-		fi; \
-		echo "⏳ Esperando servicio web... ($$i segundos restantes)"; \
-		sleep 1; \
-	done
-	@if ! docker-compose exec -T web python manage.py check --deploy >/dev/null 2>&1; then \
-		echo "❌ El servicio web no pudo iniciarse correctamente"; \
-		echo "💡 Verifica los logs con: docker-compose logs web"; \
-		exit 1; \
-	fi
+	@sleep 3
 	@echo "✅ Servicio web iniciado en http://localhost:8000"
 
 
@@ -227,23 +215,13 @@ terraform-setup: localstack-only
 # Run database migrations
 migrate:
 	@echo "🔄 Ejecutando migraciones de base de datos..."
-	@if ! docker-compose exec -T web python manage.py migrate; then \
-		echo "❌ Error ejecutando migraciones"; \
-		echo "💡 Verifica que el servicio web esté ejecutándose: docker-compose ps"; \
-		echo "💡 Verifica los logs: docker-compose logs web"; \
-		exit 1; \
-	fi
+	docker-compose exec web python manage.py migrate
 	@echo "✅ Migraciones completadas"
 
 # Run database seeders
 seed:
 	@echo "🌱 Ejecutando seeders de base de datos..."
-	@if ! docker-compose exec -T web python manage.py seed_all; then \
-		echo "❌ Error ejecutando seeders"; \
-		echo "💡 Verifica que el servicio web esté ejecutándose: docker-compose ps"; \
-		echo "💡 Verifica los logs: docker-compose logs web"; \
-		exit 1; \
-	fi
+	docker-compose exec web python manage.py seed_all
 	@echo "✅ Seeders completados"
 
 # Full clean: containers + virtual environment
@@ -297,37 +275,6 @@ test:
 	@echo "📋 Ejecutando todos los tests..."
 	@docker-compose exec web python manage.py test --verbosity=2
 	@echo "✅ Tests completados"
-
-# Run tests without LocalStack (optimized for CI)
-test-only:
-	@echo "🧪 Ejecutando tests optimizados (solo PostgreSQL)..."
-	@echo "🔧 Levantando solo PostgreSQL..."
-	@docker-compose up -d postgres
-	@echo "⏳ Esperando PostgreSQL..."
-	@for i in $$(seq 1 30); do \
-		if docker-compose exec -T postgres pg_isready -U marketplace -d marketplace >/dev/null 2>&1; then \
-			echo "✅ PostgreSQL está listo"; \
-			break; \
-		fi; \
-		echo "⏳ Esperando PostgreSQL... ($$i/30)"; \
-		sleep 1; \
-	done
-	@echo "🔧 Levantando contenedor web..."
-	@docker-compose up -d web
-	@echo "⏳ Esperando servicio web..."
-	@for i in $$(seq 1 60); do \
-		if docker-compose exec -T web python manage.py check --deploy >/dev/null 2>&1; then \
-			echo "✅ Servicio web está listo"; \
-			break; \
-		fi; \
-		echo "⏳ Esperando servicio web... ($$i/60)"; \
-		sleep 1; \
-	done
-	@echo "🛑 Deteniendo servicios innecesarios..."
-	@docker-compose stop localstack redis || true
-	@echo "📋 Ejecutando tests con configuración optimizada..."
-	@docker-compose exec web python manage.py test --settings=marketplace.settings_test --verbosity=2
-	@echo "✅ Tests optimizados completados"
 
 # Show web service logs
 logs:

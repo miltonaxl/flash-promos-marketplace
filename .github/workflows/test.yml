@@ -24,24 +24,28 @@ jobs:
         cp .env.example .env
         echo "DJANGO_SETTINGS_MODULE=marketplace.settings_test" >> .env
     
-    - name: Run optimized tests (PostgreSQL only)
+    - name: Setup complete environment
       run: |
-        timeout 600 make test-only || {
-          echo "❌ Tests failed, showing logs:"
-          echo "🔍 Estado de servicios:"
-          docker-compose ps
-          echo "🔍 Logs de PostgreSQL:"
-          docker-compose logs postgres | tail -20
-          echo "🔍 Logs del servicio web:"
-          docker-compose logs web | tail -50
+        timeout 900 make setup-complete || {
+          echo "❌ Setup failed, showing logs:"
+          docker-compose logs
           exit 1
         }
     
-    - name: Verify test execution
+    - name: Verify services are running
       run: |
-        echo "✅ Tests ejecutados exitosamente sin LocalStack"
-        echo "🔍 Servicios finales ejecutándose:"
+        echo "🔍 Verificando estado de los servicios:"
         docker-compose ps
+        echo "🔍 Verificando logs del servicio web:"
+        docker-compose logs web | tail -20
+    
+    - name: Run tests
+      run: |
+        timeout 300 make test || {
+          echo "❌ Tests failed, showing logs:"
+          docker-compose logs web | tail -50
+          exit 1
+        }
     
     - name: Upload test results
       uses: actions/upload-artifact@v4
