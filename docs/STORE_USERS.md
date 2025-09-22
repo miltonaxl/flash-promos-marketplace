@@ -37,23 +37,26 @@ Para consultar las notificaciones enviadas por una tienda específica, utiliza e
 ### Endpoint de Estadísticas de Notificaciones
 
 ```
-GET {{base_url}}/api/notifications/stats/?store_id={{store_id}}
+GET {{base_url}}/api/notifications/store_stats/
 ```
 
-**Parámetros:**
-- `store_id`: ID de la tienda (1, 2, o 3 para las tiendas mencionadas arriba)
+**Autenticación requerida:** Bearer Token del propietario de la tienda
 
 **Ejemplo de uso:**
 ```
-GET https://tu-dominio.com/api/notifications/stats/?store_id=1
+GET https://tu-dominio.com/api/notifications/store_stats/
+Authorization: Bearer <tu_access_token>
 ```
 
+**Nota importante:** Este endpoint automáticamente obtiene las estadísticas de la tienda del usuario autenticado, por lo que no necesitas especificar el `store_id`.
+
+### Respuesta del endpoint
+
 Este endpoint te permitirá ver:
-- Notificaciones enviadas por la tienda
-- Estadísticas de engagement
-- Métricas de las promociones flash
-- Datos de usuarios alcanzados
-
-## Documentación Técnica
-
-Para más detalles sobre la implementación técnica, consulta la documentación del proyecto en el directorio `docs/`.
+- ID y nombre de la tienda
+- Período de consulta (fechas de inicio y fin)
+- Total de notificaciones enviadas
+- Notificaciones agrupadas por estado de entrega
+- Número de usuarios únicos notificados
+- Notificaciones por día
+- Notificaciones por tipo
