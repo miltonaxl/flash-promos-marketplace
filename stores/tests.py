@@ -13,8 +13,14 @@ class StoreModelTest(TestCase):
     """Tests para el modelo Store"""
     
     def setUp(self):
+        self.user = User.objects.create_user(
+            username='testowner',
+            email='owner@test.com',
+            password='testpass123'
+        )
         self.store_data = {
             'name': 'Test Store',
+            'owner': self.user,
             'latitude': 6.2442,
             'longitude': -75.5812,
             'address': 'Test Address 123',
@@ -34,13 +40,15 @@ class StoreModelTest(TestCase):
     def test_store_str_representation(self):
         """Test representación string del modelo Store"""
         store = Store.objects.create(**self.store_data)
-        # Como no hay __str__ definido, debería usar el default
-        self.assertIn('Store object', str(store))
+        # El __str__ está definido como "name - owner.username"
+        expected_str = f"{store.name} - {store.owner.username}"
+        self.assertEqual(str(store), expected_str)
     
     def test_store_default_values(self):
         """Test valores por defecto del modelo Store"""
         store = Store.objects.create(
             name='Test Store',
+            owner=self.user,
             address='Test Address'
         )
         self.assertTrue(store.is_active)  # Default True
@@ -66,8 +74,14 @@ class ProductModelTest(TestCase):
     """Tests para el modelo Product"""
     
     def setUp(self):
+        self.user = User.objects.create_user(
+            username='testowner',
+            email='owner@test.com',
+            password='testpass123'
+        )
         self.store = Store.objects.create(
             name='Test Store',
+            owner=self.user,
             address='Test Address'
         )
         self.product_data = {
@@ -136,8 +150,23 @@ class StoreSerializerTest(TestCase):
     """Tests para StoreSerializer"""
     
     def setUp(self):
+        self.user = User.objects.create_user(
+            username='testowner',
+            email='owner@test.com',
+            password='testpass123'
+        )
         self.store_data = {
             'name': 'Test Store',
+            'owner': self.user,
+            'latitude': 6.2442,
+            'longitude': -75.5812,
+            'address': 'Test Address 123',
+            'is_active': True
+        }
+        # Datos para deserialización (usando ID del usuario)
+        self.store_data_for_serializer = {
+            'name': 'Test Store',
+            'owner': self.user.id,
             'latitude': 6.2442,
             'longitude': -75.5812,
             'address': 'Test Address 123',
@@ -160,7 +189,7 @@ class StoreSerializerTest(TestCase):
     
     def test_store_deserialization(self):
         """Test deserialización de Store"""
-        serializer = StoreSerializer(data=self.store_data)
+        serializer = StoreSerializer(data=self.store_data_for_serializer)
         self.assertTrue(serializer.is_valid())
         
         store = serializer.save()
@@ -184,8 +213,14 @@ class ProductSerializerTest(TestCase):
     """Tests para ProductSerializer"""
     
     def setUp(self):
+        self.user = User.objects.create_user(
+            username='testowner',
+            email='owner@test.com',
+            password='testpass123'
+        )
         self.store = Store.objects.create(
             name='Test Store',
+            owner=self.user,
             address='Test Address'
         )
         self.product_data = {
@@ -251,6 +286,7 @@ class StoreAPITest(APITestCase):
         )
         self.store_data = {
             'name': 'Test Store',
+            'owner': self.user,
             'latitude': 6.2442,
             'longitude': -75.5812,
             'address': 'Test Address 123',
@@ -284,7 +320,8 @@ class StoreAPITest(APITestCase):
             'latitude': 4.7109,
             'longitude': -74.0721,
             'address': 'New Test Address',
-            'is_active': True
+            'is_active': True,
+            'owner': self.user.id
         }
         
         response = self.client.post(url, new_store_data, format='json')
@@ -306,7 +343,8 @@ class StoreAPITest(APITestCase):
             'latitude': self.store.latitude,
             'longitude': self.store.longitude,
             'address': self.store.address,
-            'is_active': self.store.is_active
+            'is_active': self.store.is_active,
+            'owner': self.user.id
         }
         
         response = self.client.put(url, updated_data, format='json')
@@ -345,6 +383,7 @@ class ProductAPITest(APITestCase):
         )
         self.store = Store.objects.create(
             name='Test Store',
+            owner=self.user,
             address='Test Address'
         )
         self.product = Product.objects.create(
@@ -434,7 +473,8 @@ class ProductAPITest(APITestCase):
         # Crear otra tienda y producto
         other_store = Store.objects.create(
             name='Other Store',
-            address='Other Address'
+            address='Other Address',
+            owner=self.user
         )
         Product.objects.create(
             store=other_store,
@@ -453,8 +493,14 @@ class StoreProductIntegrationTest(TestCase):
     """Tests de integración entre Store y Product"""
     
     def setUp(self):
+        self.user = User.objects.create_user(
+            username='testowner',
+            email='owner@test.com',
+            password='testpass123'
+        )
         self.store = Store.objects.create(
             name='Integration Test Store',
+            owner=self.user,
             latitude=6.2442,
             longitude=-75.5812,
             address='Integration Test Address'

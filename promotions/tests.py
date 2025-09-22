@@ -27,7 +27,8 @@ class FlashPromoModelTest(TestCase):
             name='Test Store',
             address='123 Test St',
             latitude=40.7128,
-            longitude=-74.0060
+            longitude=-74.0060,
+            owner=self.user
         )
         
         self.product = Product.objects.create(
@@ -139,7 +140,8 @@ class ProductReservationModelTest(TestCase):
             name='Reserve Store',
             address='456 Reserve Ave',
             latitude=40.7589,
-            longitude=-73.9851
+            longitude=-73.9851,
+            owner=self.user
         )
         
         self.product = Product.objects.create(
@@ -234,7 +236,8 @@ class FlashPromoSerializerTest(TestCase):
             name='Serializer Store',
             address='321 Serializer St',
             latitude=40.7282,
-            longitude=-74.0776
+            longitude=-74.0776,
+            owner=self.user
         )
         
         self.product = Product.objects.create(
@@ -305,7 +308,8 @@ class ProductReservationSerializerTest(TestCase):
             name='Reserve Serializer Store',
             address='789 Reserve St',
             latitude=40.7505,
-            longitude=-73.9934
+            longitude=-73.9934,
+            owner=self.user
         )
         
         self.product = Product.objects.create(
@@ -373,7 +377,8 @@ class PromotionsAPITest(APITestCase):
             name='API Store',
             address='654 API Road',
             latitude=40.7614,
-            longitude=-73.9776
+            longitude=-73.9776,
+            owner=self.user
         )
         
         self.product = Product.objects.create(
@@ -465,7 +470,8 @@ class PromotionsIntegrationTest(TestCase):
             name='Segment Store',
             address='123 Segment St',
             latitude=40.7831,
-            longitude=-73.9712
+            longitude=-73.9712,
+            owner=store_owner
         )
         
         product = Product.objects.create(
@@ -518,7 +524,8 @@ class PromotionsIntegrationTest(TestCase):
             name='Workflow Store',
             address='456 Workflow Ave',
             latitude=40.7505,
-            longitude=-73.9934
+            longitude=-73.9934,
+            owner=store_owner
         )
         
         product = Product.objects.create(
@@ -574,7 +581,8 @@ class PromotionsIntegrationTest(TestCase):
             name='Multi Promo Store',
             address='789 Multi St',
             latitude=40.7614,
-            longitude=-73.9776
+            longitude=-73.9776,
+            owner=store_owner
         )
         
         # Crear múltiples productos

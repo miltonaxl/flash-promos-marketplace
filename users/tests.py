@@ -48,7 +48,6 @@ class UserModelTest(TestCase):
         self.assertIsNone(user.last_notification_sent)
         self.assertIsNone(user.latitude)
         self.assertIsNone(user.longitude)
-        self.assertIsNone(user.location)
     
     def test_user_types(self):
         """Test diferentes tipos de usuario"""

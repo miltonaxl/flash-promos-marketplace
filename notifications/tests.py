@@ -52,11 +52,19 @@ class GetEligibleUsersTest(TestCase):
     """Tests para obtener usuarios elegibles para promociones"""
     
     def setUp(self):
+        # Crear usuario owner para la tienda
+        self.owner = User.objects.create_user(
+            username='storeowner',
+            email='owner@test.com',
+            password='testpass123'
+        )
+        
         self.store = Store.objects.create(
             name='Test Store',
             address='123 Test St',
             latitude=40.7831,
-            longitude=-73.9712
+            longitude=-73.9712,
+            owner=self.owner
         )
         
         self.product = Product.objects.create(
@@ -147,11 +155,19 @@ class IsUserNearStoreTest(TestCase):
     """Tests para verificar proximidad de usuario a tienda"""
     
     def setUp(self):
+        # Crear usuario owner para la tienda
+        self.owner = User.objects.create_user(
+            username='storeowner2',
+            email='owner2@test.com',
+            password='testpass123'
+        )
+        
         self.store = Store.objects.create(
             name='Test Store',
             address='123 Test St',
             latitude=40.7831,
-            longitude=-73.9712
+            longitude=-73.9712,
+            owner=self.owner
         )
     
     def test_user_near_store_within_distance(self):
@@ -192,11 +208,19 @@ class IsUserNearStoreTest(TestCase):
     
     def test_store_no_coordinates(self):
         """Test tienda sin coordenadas"""
+        # Crear usuario owner para la tienda
+        owner = User.objects.create_user(
+            username='nocoordsowner',
+            email='nocoordsowner@test.com',
+            password='testpass123'
+        )
+        
         store_no_coords = Store.objects.create(
             name='No Coords Store',
             address='456 No Coords St',
             latitude=None,
-            longitude=None
+            longitude=None,
+            owner=owner
         )
         
         user = User.objects.create(
@@ -214,11 +238,19 @@ class SendSNSNotificationTest(TestCase):
     """Tests para envío de notificaciones SNS"""
     
     def setUp(self):
+        # Crear usuario owner para la tienda
+        self.owner = User.objects.create_user(
+            username='storeowner3',
+            email='owner3@test.com',
+            password='testpass123'
+        )
+        
         self.store = Store.objects.create(
             name='Test Store',
             address='123 Test St',
             latitude=40.7831,
-            longitude=-73.9712
+            longitude=-73.9712,
+            owner=self.owner
         )
         
         self.product = Product.objects.create(
@@ -285,11 +317,19 @@ class SendFlashPromoNotificationTest(TestCase):
     """Tests para el flujo completo de envío de notificaciones"""
     
     def setUp(self):
+        # Crear usuario owner para la tienda
+        self.owner = User.objects.create_user(
+            username='storeowner4',
+            email='owner4@test.com',
+            password='testpass123'
+        )
+        
         self.store = Store.objects.create(
             name='Test Store',
             address='123 Test St',
             latitude=40.7831,
-            longitude=-73.9712
+            longitude=-73.9712,
+            owner=self.owner
         )
         
         self.product = Product.objects.create(
