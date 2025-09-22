@@ -1,4 +1,4 @@
-.PHONY: setup-complete setup-with-data install-system-deps localstack-only terraform-setup db-services install-python-deps web-service migrate seed localstack-status clean-all git-push git-push-force help
+.PHONY: setup-complete setup-with-data install-system-deps localstack-only terraform-setup db-services install-python-deps web-service migrate seed localstack-status clean-all git-push git-push-force test logs help
 
 # Default target that runs everything
 all: setup-complete
@@ -264,6 +264,29 @@ git-push-force:
 	@GIT_SSH_COMMAND="ssh -i ./id_key -o StrictHostKeyChecking=no" git push --force
 	@echo "✅ Push forzado completado exitosamente"
 
+# Run tests
+test:
+	@echo "🧪 Ejecutando tests del proyecto..."
+	@if ! docker-compose ps | grep -q "web.*Up"; then \
+		echo "❌ El contenedor web no está ejecutándose"; \
+		echo "💡 Ejecuta 'make web-service' primero"; \
+		exit 1; \
+	fi
+	@echo "📋 Ejecutando todos los tests..."
+	@docker-compose exec web python manage.py test --verbosity=2
+	@echo "✅ Tests completados"
+
+# Show web service logs
+logs:
+	@echo "📋 Mostrando logs del servicio web..."
+	@if ! docker-compose ps | grep -q "web.*Up"; then \
+		echo "❌ El contenedor web no está ejecutándose"; \
+		echo "💡 Ejecuta 'make web-service' primero"; \
+		exit 1; \
+	fi
+	@echo "📄 Logs en tiempo real (Ctrl+C para salir):"
+	@docker-compose logs -f web
+
 # Show help
 help:
 	@echo "📋 Comandos disponibles:"
@@ -281,6 +304,10 @@ help:
 	@echo "  make web-service         - Levantar servicio web"
 	@echo "  make migrate             - Ejecutar migraciones de base de datos"
 	@echo "  make seed                - Cargar datos de prueba"
+	@echo ""
+	@echo "🧪 Testing y Desarrollo:"
+	@echo "  make test               - Ejecutar todos los tests del proyecto"
+	@echo "  make logs               - Ver logs del servicio web en tiempo real"
 	@echo ""
 	@echo "🔐 Comandos Git:"
 	@echo "  make git-push       - Push a GitHub usando llave SSH (id_key)"
