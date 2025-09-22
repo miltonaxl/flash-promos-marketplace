@@ -3,9 +3,19 @@
 import os
 from .settings import *
 
-# Use the same database configuration as main settings but with test database name
-DATABASES['default']['TEST'] = {
-    'NAME': 'test_marketplace',
+# Override database configuration for tests
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.contrib.gis.db.backends.postgis',
+        'NAME': os.getenv('POSTGRES_DB', 'test_marketplace'),
+        'USER': os.getenv('POSTGRES_USER', 'marketplace'),
+        'PASSWORD': os.getenv('POSTGRES_PASSWORD', 'password'),
+        'HOST': os.getenv('POSTGRES_HOST', 'localhost'),
+        'PORT': os.getenv('POSTGRES_PORT', '5432'),
+        'TEST': {
+            'NAME': 'test_marketplace',
+        },
+    }
 }
 
 # Keep GIS support for tests
@@ -27,13 +37,16 @@ class DisableMigrations:
 
 MIGRATION_MODULES = DisableMigrations()
 
-# Celery settings for tests
+# Celery settings for tests - execute tasks synchronously
 CELERY_TASK_ALWAYS_EAGER = True
 CELERY_TASK_EAGER_PROPAGATION = True
+CELERY_BROKER_URL = 'memory://'
+CELERY_RESULT_BACKEND = 'cache+memory://'
 
-# AWS settings for tests
+# AWS settings for tests - disable external services
 AWS_SNS_ENDPOINT_URL = None
 AWS_SQS_ENDPOINT_URL = None
+FLASH_PROMO_TOPIC_ARN = None
 
 # Fast password hashing for tests
 PASSWORD_HASHERS = [
