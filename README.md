@@ -68,6 +68,7 @@ Para información detallada, consulta la documentación en la carpeta `docs/`:
 - [Variables de Entorno](docs/CONFIGURATION.md)
 - [Estructura del Proyecto](docs/STRUCTURE.md)
 - [Infraestructura Terraform](docs/TERRAFORM.md)
+- [Usuarios de Store Para ver las notificaciones enviadas](docs/STORE_USERS.md)
 
 ### Troubleshooting
 

@@ -276,6 +276,23 @@ test:
 	@docker-compose exec web python manage.py test --verbosity=2
 	@echo "✅ Tests completados"
 
+# Run tests without LocalStack (optimized for CI/CD)
+test-only:
+	@echo "🧪 Ejecutando tests optimizados (solo PostgreSQL)..."
+	@echo "🔧 Levantando PostgreSQL..."
+	@docker-compose up -d postgres
+	@echo "⏳ Esperando a que PostgreSQL esté listo..."
+	@sleep 5
+	@echo "🚀 Levantando contenedor web..."
+	@docker-compose up -d web
+	@echo "⏳ Esperando a que el contenedor web esté listo..."
+	@sleep 3
+	@echo "🛑 Deteniendo servicios innecesarios..."
+	@docker-compose stop redis localstack 2>/dev/null || true
+	@echo "📋 Ejecutando tests con configuración de test..."
+	@docker-compose exec web python manage.py test --settings=marketplace.settings_test --verbosity=2
+	@echo "✅ Tests optimizados completados"
+
 # Show web service logs
 logs:
 	@echo "📋 Mostrando logs del servicio web..."
