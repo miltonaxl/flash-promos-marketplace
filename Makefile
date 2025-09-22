@@ -298,6 +298,37 @@ test:
 	@docker-compose exec web python manage.py test --verbosity=2
 	@echo "✅ Tests completados"
 
+# Run tests without LocalStack (optimized for CI)
+test-only:
+	@echo "🧪 Ejecutando tests optimizados (solo PostgreSQL)..."
+	@echo "🔧 Levantando solo PostgreSQL..."
+	@docker-compose up -d postgres
+	@echo "⏳ Esperando PostgreSQL..."
+	@for i in $$(seq 1 30); do \
+		if docker-compose exec -T postgres pg_isready -U marketplace -d marketplace >/dev/null 2>&1; then \
+			echo "✅ PostgreSQL está listo"; \
+			break; \
+		fi; \
+		echo "⏳ Esperando PostgreSQL... ($$i/30)"; \
+		sleep 1; \
+	done
+	@echo "🔧 Levantando contenedor web..."
+	@docker-compose up -d web
+	@echo "⏳ Esperando servicio web..."
+	@for i in $$(seq 1 60); do \
+		if docker-compose exec -T web python manage.py check --deploy >/dev/null 2>&1; then \
+			echo "✅ Servicio web está listo"; \
+			break; \
+		fi; \
+		echo "⏳ Esperando servicio web... ($$i/60)"; \
+		sleep 1; \
+	done
+	@echo "🛑 Deteniendo servicios innecesarios..."
+	@docker-compose stop localstack redis || true
+	@echo "📋 Ejecutando tests con configuración optimizada..."
+	@docker-compose exec web python manage.py test --settings=marketplace.settings_test --verbosity=2
+	@echo "✅ Tests optimizados completados"
+
 # Show web service logs
 logs:
 	@echo "📋 Mostrando logs del servicio web..."
