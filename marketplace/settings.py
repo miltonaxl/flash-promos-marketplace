@@ -25,7 +25,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'django.contrib.gis',
+    # 'django.contrib.gis',  # Comentado temporalmente
     
     # Third party apps
     'rest_framework',
@@ -35,6 +35,7 @@ INSTALLED_APPS = [
     'django_filters',
     
     # Local apps
+    'marketplace',
     'promotions',
     'stores',
     'users',
@@ -74,12 +75,8 @@ WSGI_APPLICATION = 'marketplace.wsgi.application'
 # Database
 DATABASES = {
     'default': {
-        'ENGINE': 'django.contrib.gis.db.backends.postgis',  # Volver a PostGIS
-        'NAME': os.environ.get('POSTGRES_DB', 'marketplace'),
-        'USER': os.environ.get('POSTGRES_USER', 'marketplace'),
-        'PASSWORD': os.environ.get('POSTGRES_PASSWORD', 'password'),
-        'HOST': os.environ.get('POSTGRES_HOST', 'localhost'),
-        'PORT': os.environ.get('POSTGRES_PORT', '5432'),
+        'ENGINE': 'django.db.backends.sqlite3',  # Cambio temporal a SQLite
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
 
@@ -183,26 +180,7 @@ if 'postgis' in DATABASES['default']['ENGINE']:
     GDAL_LIBRARY_PATH = config('GDAL_LIBRARY_PATH', default='')
     GEOS_LIBRARY_PATH = config('GEOS_LIBRARY_PATH', default='')
 
-# Testing configuration
-if 'test' in os.sys.argv:
-    # Use SQLite for faster tests
-    DATABASES['default'] = {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': ':memory:',
-    }
-    
-    # Disable Celery during tests
-    CELERY_TASK_ALWAYS_EAGER = True
-    CELERY_TASK_EAGER_PROPAGATION = True
-    
-    # Disable AWS calls during tests
-    AWS_SNS_ENDPOINT_URL = None
-    AWS_SQS_ENDPOINT_URL = None
-    
-    # Faster password hashing for tests
-    PASSWORD_HASHERS = [
-        'django.contrib.auth.hashers.MD5PasswordHasher',
-    ]
+
 
 # Logging configuration
 LOGGING = {

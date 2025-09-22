@@ -13,8 +13,12 @@ app.conf.beat_schedule = {
         'task': 'promotions.tasks.check_active_promos',
         'schedule': 60.0,
     },
-    'clean-expired-reservations-every-minute': {
-        'task': 'promotions.tasks.clean_expired_reservations',
-        'schedule': 60.0,
+    'cleanup-expired-promos-every-hour': {
+        'task': 'promotions.tasks.cleanup_expired_promos',
+        'schedule': 3600.0,
+    },
+    'process-notification-queue-every-30s': {
+        'task': 'promotions.tasks.process_notification_queue',
+        'schedule': 30.0,
     },
 }

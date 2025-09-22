@@ -1,12 +1,12 @@
-import json
 import boto3
-import math
+import json
 from django.conf import settings
-from django.utils import timezone
 from django.db.models import Q
+from django.utils import timezone
 from users.models import User
 from promotions.models import FlashPromo
-
+from .models import NotificationLog
+import math
 def haversine_distance(lat1, lon1, lat2, lon2):
     """
     Calculate the great circle distance between two points 
@@ -83,20 +83,34 @@ def send_sns_notification(user, promo):
         aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY
     )
     
+    message_text = f"Flash Promo available: {promo.product.name} at {promo.promo_price}"
     message = {
         'user_id': user.id,
         'promo_id': promo.id,
-        'message': f"Flash Promo available: {promo.product.name} at {promo.promo_price}"
+        'message': message_text
     }
     
+    delivery_status = 'sent'
     try:
         sns_client.publish(
             TopicArn=settings.FLASH_PROMO_TOPIC_ARN,
             Message=json.dumps(message)
         )
         print(f"Notification sent to user {user.id} for promo {promo.id}")
+        delivery_status = 'delivered'
     except Exception as e:
         print(f"Error sending notification: {e}")
+        delivery_status = 'failed'
+    
+    # Registrar la notificación en el log
+    NotificationLog.objects.create(
+        user=user,
+        store=promo.product.store,
+        flash_promo=promo,
+        notification_type='flash_promo',
+        message=message_text,
+        delivery_status=delivery_status
+    )
 
 # Función adicional para procesar mensajes de la cola SQS (si necesitas consumirlos)
 def process_sqs_messages():

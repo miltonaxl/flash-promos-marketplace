@@ -1,9 +1,12 @@
 from django.core.management.base import BaseCommand
+from django.contrib.auth import get_user_model
+from django.contrib.auth.hashers import make_password
 from stores.models import Store, Product
 from faker import Faker
 import random
 
 fake = Faker()
+User = get_user_model()
 
 class Command(BaseCommand):
     help = 'Seed stores and products data'
@@ -54,23 +57,44 @@ class Command(BaseCommand):
         ]
         
         for i, store_data in enumerate(stores_data[:count]):
-            store = Store.objects.create(
+            # Crear usuario owner para la tienda (o obtener si ya existe)
+            owner, created = User.objects.get_or_create(
+                username=f'owner_{i+1}',
+                defaults={
+                    'email': f'owner{i+1}@techshop.com',
+                    'password': make_password('ownerpass123'),
+                    'first_name': fake.first_name(),
+                    'last_name': fake.last_name(),
+                    'user_type': 'regular',
+                    'phone_number': fake.phone_number()[:15],
+                    'latitude': store_data['latitude'],
+                    'longitude': store_data['longitude']
+                }
+            )
+            
+            store, store_created = Store.objects.get_or_create(
                 name=store_data['name'],
-                latitude=store_data['latitude'],
-                longitude=store_data['longitude'],
-                address=store_data['address'],
-                is_active=True
+                defaults={
+                    'latitude': store_data['latitude'],
+                    'longitude': store_data['longitude'],
+                    'address': store_data['address'],
+                    'owner': owner,
+                    'is_active': True
+                }
             )
             
             for product_data in store_data['products']:
-                Product.objects.create(
+                product, product_created = Product.objects.get_or_create(
                     store=store,
                     name=product_data['name'],
-                    description=product_data['description'],
-                    original_price=product_data['price'],
-                    is_available=True
+                    defaults={
+                        'description': product_data['description'],
+                        'original_price': product_data['price'],
+                        'is_available': True
+                    }
                 )
             
-            self.stdout.write(self.style.SUCCESS(f'Created store: {store.name} with {len(store_data["products"])} products'))
+            action = "Created" if store_created else "Found existing"
+            self.stdout.write(self.style.SUCCESS(f'{action} store: {store.name} with owner {owner.username} and {len(store_data["products"])} products'))
         
         self.stdout.write(self.style.SUCCESS('Stores and products seeding completed!'))
