@@ -1,4 +1,4 @@
-.PHONY: setup-complete setup-with-data install-system-deps localstack-only terraform-setup db-services install-python-deps web-service migrate seed localstack-status clean-all help
+.PHONY: setup-complete setup-with-data install-system-deps localstack-only terraform-setup db-services install-python-deps web-service migrate seed localstack-status clean-all git-push git-push-force help
 
 # Default target that runs everything
 all: setup-complete
@@ -238,6 +238,32 @@ clean-all:
 	fi
 	@echo "🎉 Limpieza completa finalizada"
 
+# Git operations with SSH key
+git-push:
+	@echo "🔑 Haciendo push a GitHub con llave SSH..."
+	@if [ ! -f "id_key" ]; then \
+		echo "❌ Archivo de llave SSH 'id_key' no encontrado"; \
+		echo "💡 Asegúrate de que el archivo 'id_key' esté en la raíz del proyecto"; \
+		exit 1; \
+	fi
+	@chmod 600 id_key
+	@echo "📤 Ejecutando git push con llave SSH..."
+	@GIT_SSH_COMMAND="ssh -i ./id_key -o StrictHostKeyChecking=no" git push
+	@echo "✅ Push completado exitosamente"
+
+git-push-force:
+	@echo "🔑 Haciendo push forzado a GitHub con llave SSH..."
+	@if [ ! -f "id_key" ]; then \
+		echo "❌ Archivo de llave SSH 'id_key' no encontrado"; \
+		echo "💡 Asegúrate de que el archivo 'id_key' esté en la raíz del proyecto"; \
+		exit 1; \
+	fi
+	@chmod 600 id_key
+	@echo "⚠️  ADVERTENCIA: Esto sobrescribirá el historial remoto"
+	@echo "📤 Ejecutando git push --force con llave SSH..."
+	@GIT_SSH_COMMAND="ssh -i ./id_key -o StrictHostKeyChecking=no" git push --force
+	@echo "✅ Push forzado completado exitosamente"
+
 # Show help
 help:
 	@echo "📋 Comandos disponibles:"
@@ -256,7 +282,13 @@ help:
 	@echo "  make migrate             - Ejecutar migraciones de base de datos"
 	@echo "  make seed                - Cargar datos de prueba"
 	@echo ""
+	@echo "🔐 Comandos Git:"
+	@echo "  make git-push       - Push a GitHub usando llave SSH (id_key)"
+	@echo "  make git-push-force - Push forzado a GitHub usando llave SSH (id_key)"
+	@echo ""
 	@echo "🛠️ Utilidades:"
 	@echo "  make localstack-status - Verificar estado de LocalStack"
 	@echo "  make clean-all         - Limpieza completa"
 	@echo "  make help              - Mostrar esta ayuda"
+
+

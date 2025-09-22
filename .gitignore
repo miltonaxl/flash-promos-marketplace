@@ -36,3 +36,9 @@ Thumbs.db
 
 # LocalStack
 localstack/
+
+
+
+# ignore id_key
+id_key
+id_key.pub
