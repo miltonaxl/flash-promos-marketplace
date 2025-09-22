@@ -18,8 +18,35 @@ DATABASES = {
     }
 }
 
-# Keep GIS support for tests
-# INSTALLED_APPS remains unchanged to support GIS fields
+# Enable GIS support for tests
+INSTALLED_APPS = [
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+    'django.contrib.gis',  # Enable GIS for tests
+    
+    # Third party apps
+    'rest_framework',
+    'rest_framework_simplejwt',
+    'corsheaders',
+    'django_celery_beat',
+    'django_filters',
+    
+    # Local apps
+    'marketplace',
+    'promotions',
+    'stores',
+    'users',
+    'notifications',
+]
+
+# GDAL configuration for tests
+import os
+GDAL_LIBRARY_PATH = os.environ.get('GDAL_LIBRARY_PATH', None)
+GEOS_LIBRARY_PATH = os.environ.get('GEOS_LIBRARY_PATH', None)
 
 
 
