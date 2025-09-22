@@ -195,7 +195,19 @@ web-service:
 	@echo "🌐 Iniciando solo el servicio web..."
 	docker-compose up -d web
 	@echo "⏳ Esperando a que el servicio web esté listo..."
-	@sleep 3
+	@for i in $$(seq 60 -1 1); do \
+		if docker-compose exec -T web python manage.py check --deploy >/dev/null 2>&1; then \
+			echo "✅ Servicio web está listo"; \
+			break; \
+		fi; \
+		echo "⏳ Esperando servicio web... ($$i segundos restantes)"; \
+		sleep 1; \
+	done
+	@if ! docker-compose exec -T web python manage.py check --deploy >/dev/null 2>&1; then \
+		echo "❌ El servicio web no pudo iniciarse correctamente"; \
+		echo "💡 Verifica los logs con: docker-compose logs web"; \
+		exit 1; \
+	fi
 	@echo "✅ Servicio web iniciado en http://localhost:8000"
 
 
@@ -215,13 +227,23 @@ terraform-setup: localstack-only
 # Run database migrations
 migrate:
 	@echo "🔄 Ejecutando migraciones de base de datos..."
-	docker-compose exec web python manage.py migrate
+	@if ! docker-compose exec -T web python manage.py migrate; then \
+		echo "❌ Error ejecutando migraciones"; \
+		echo "💡 Verifica que el servicio web esté ejecutándose: docker-compose ps"; \
+		echo "💡 Verifica los logs: docker-compose logs web"; \
+		exit 1; \
+	fi
 	@echo "✅ Migraciones completadas"
 
 # Run database seeders
 seed:
 	@echo "🌱 Ejecutando seeders de base de datos..."
-	docker-compose exec web python manage.py seed_all
+	@if ! docker-compose exec -T web python manage.py seed_all; then \
+		echo "❌ Error ejecutando seeders"; \
+		echo "💡 Verifica que el servicio web esté ejecutándose: docker-compose ps"; \
+		echo "💡 Verifica los logs: docker-compose logs web"; \
+		exit 1; \
+	fi
 	@echo "✅ Seeders completados"
 
 # Full clean: containers + virtual environment

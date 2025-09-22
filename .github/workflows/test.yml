@@ -26,11 +26,26 @@ jobs:
     
     - name: Setup complete environment
       run: |
-        make setup-complete
+        timeout 900 make setup-complete || {
+          echo "❌ Setup failed, showing logs:"
+          docker-compose logs
+          exit 1
+        }
+    
+    - name: Verify services are running
+      run: |
+        echo "🔍 Verificando estado de los servicios:"
+        docker-compose ps
+        echo "🔍 Verificando logs del servicio web:"
+        docker-compose logs web | tail -20
     
     - name: Run tests
       run: |
-        make test
+        timeout 300 make test || {
+          echo "❌ Tests failed, showing logs:"
+          docker-compose logs web | tail -50
+          exit 1
+        }
     
     - name: Upload test results
       uses: actions/upload-artifact@v4
