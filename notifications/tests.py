@@ -3,11 +3,14 @@ from django.utils import timezone
 from unittest.mock import patch, MagicMock
 from decimal import Decimal
 from datetime import date, time
+from rest_framework.test import APITestCase, APIClient
+from rest_framework import status
 import json
 
 from users.models import User
 from stores.models import Store, Product
 from promotions.models import FlashPromo
+from notifications.models import NotificationLog
 from notifications.utils import (
     haversine_distance,
     send_flash_promo_notification,
@@ -311,6 +314,115 @@ class SendSNSNotificationTest(TestCase):
         send_sns_notification(self.user, self.promo)
         
         mock_sns.publish.assert_called_once()
+
+
+class NotificationStatsAPITest(APITestCase):
+    """Tests para la API de estadísticas de notificaciones"""
+    
+    def setUp(self):
+        self.client = APIClient()
+        
+        # Crear usuario owner para la tienda
+        self.owner = User.objects.create_user(
+            username='storeowner_stats',
+            email='owner_stats@test.com',
+            password='testpass123'
+        )
+        
+        self.store = Store.objects.create(
+            name='Stats Test Store',
+            address='123 Stats St',
+            latitude=40.7831,
+            longitude=-73.9712,
+            owner=self.owner
+        )
+        
+        self.product = Product.objects.create(
+            name='Stats Test Product',
+            description='Test product for stats',
+            original_price=Decimal('100.00'),
+            store=self.store
+        )
+        
+        self.promo = FlashPromo.objects.create(
+            product=self.product,
+            promo_price=Decimal('80.00'),
+            start_time=time(9, 0),
+            end_time=time(18, 0),
+            eligible_segments=['new_users'],
+            is_active=True
+        )
+        
+        # Crear algunos logs de notificaciones para testing
+        self.user1 = User.objects.create(
+            username='user1',
+            email='user1@test.com'
+        )
+        
+        self.user2 = User.objects.create(
+            username='user2',
+            email='user2@test.com'
+        )
+        
+        # Crear logs de notificaciones
+        NotificationLog.objects.create(
+            user=self.user1,
+            store=self.store,
+            flash_promo=self.promo,
+            notification_type='flash_promo',
+            message='Test notification 1',
+            delivery_status='delivered'
+        )
+        
+        NotificationLog.objects.create(
+            user=self.user2,
+            store=self.store,
+            flash_promo=self.promo,
+            notification_type='flash_promo',
+            message='Test notification 2',
+            delivery_status='failed'
+        )
+    
+    def test_store_stats_authenticated_owner(self):
+        """Test obtener estadísticas con owner autenticado"""
+        self.client.force_authenticate(user=self.owner)
+        
+        response = self.client.get('/api/notifications/store_stats/')
+        
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        
+        data = response.json()
+        self.assertEqual(data['store_id'], self.store.id)
+        self.assertEqual(data['store_name'], 'Stats Test Store')
+        self.assertEqual(data['total_notifications_sent'], 2)
+        self.assertIn('period_days', data)
+        self.assertIn('start_date', data)
+        self.assertIn('end_date', data)
+        self.assertIn('notifications_by_status', data)
+        self.assertIn('unique_users_notified', data)
+        self.assertIn('notifications_by_day', data)
+        self.assertIn('notifications_by_type', data)
+    
+    def test_store_stats_unauthenticated(self):
+        """Test acceso sin autenticación"""
+        response = self.client.get('/api/notifications/store_stats/')
+        
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+    
+    def test_store_stats_user_without_store(self):
+        """Test usuario autenticado pero sin tienda"""
+        user_without_store = User.objects.create_user(
+            username='no_store_user',
+            email='nostore@test.com',
+            password='testpass123'
+        )
+        
+        self.client.force_authenticate(user=user_without_store)
+        
+        response = self.client.get('/api/notifications/store_stats/')
+        
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertIn('No store found', response.json()['error'])
 
 
 class SendFlashPromoNotificationTest(TestCase):

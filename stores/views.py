@@ -12,6 +12,16 @@ class ProductViewSet(viewsets.ModelViewSet):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
     
+    def get_queryset(self):
+        """Filtrar productos por parámetros de consulta"""
+        queryset = Product.objects.all()
+        store_id = self.request.query_params.get('store', None)
+        
+        if store_id is not None:
+            queryset = queryset.filter(store=store_id)
+            
+        return queryset
+    
     def get_permissions(self):
         """
         Permite acceso público para listar y obtener productos,

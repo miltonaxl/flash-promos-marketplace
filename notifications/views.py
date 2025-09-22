@@ -16,29 +16,16 @@ class NotificationViewSet(viewsets.ModelViewSet):
     
     @action(detail=False, methods=['get'])
     def store_stats(self, request):
-        """Obtener estadísticas de notificaciones por tienda"""
-        store_id = request.query_params.get('store_id')
+        """Obtener estadísticas de notificaciones por tienda del usuario autenticado"""
         days = int(request.query_params.get('days', 30))  # Por defecto últimos 30 días
         
-        if not store_id:
-            return Response(
-                {'error': 'store_id parameter is required'}, 
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
+        # Obtener la tienda del usuario autenticado
         try:
-            store = Store.objects.get(id=store_id)
+            store = Store.objects.get(owner=request.user)
         except Store.DoesNotExist:
             return Response(
-                {'error': 'Store not found'}, 
+                {'error': 'No store found for the authenticated user'}, 
                 status=status.HTTP_404_NOT_FOUND
-            )
-        
-        # Verificar que el usuario sea el owner de la tienda
-        if store.owner != request.user:
-            return Response(
-                {'error': 'Only the store owner can view notification stats'}, 
-                status=status.HTTP_403_FORBIDDEN
             )
         
         # Calcular fecha de inicio

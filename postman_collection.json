@@ -27,7 +27,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"username\": \"testuser\",\n    \"password\": \"testpassword123\"\n}"
+							"raw": "{\n    \"username\": \"{{login_username}}\",\n    \"password\": \"{{login_password}}\"\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/api/auth/login/",
@@ -49,20 +49,28 @@
 									"    var jsonData = pm.response.json();",
 									"    pm.expect(jsonData).to.have.property('access');",
 									"    ",
-									"    // Guardar token en variables de entorno",
+									"    // Guardar token en variables de entorno y globales",
 									"    pm.environment.set('access_token', jsonData.access);",
 									"    pm.globals.set('access_token', jsonData.access);",
+									"    pm.collectionVariables.set('access_token', jsonData.access);",
 									"    ",
 									"    if (jsonData.refresh) {",
 									"        pm.environment.set('refresh_token', jsonData.refresh);",
+									"        pm.globals.set('refresh_token', jsonData.refresh);",
+									"        pm.collectionVariables.set('refresh_token', jsonData.refresh);",
 									"    }",
 									"    ",
 									"    if (jsonData.user) {",
 									"        pm.environment.set('user_id', jsonData.user.id);",
 									"        pm.environment.set('username', jsonData.user.username);",
+									"        pm.environment.set('user_type', jsonData.user.user_type);",
+									"        pm.globals.set('current_user_id', jsonData.user.id);",
+									"        pm.globals.set('current_username', jsonData.user.username);",
 									"    }",
 									"    ",
-									"    console.log('✅ Login exitoso - Token guardado');",
+									"    console.log('✅ Login exitoso - Token guardado globalmente');",
+									"    console.log('Usuario:', jsonData.user ? jsonData.user.username : 'N/A');",
+									"    console.log('Token disponible en: environment, globals y collection variables');",
 									"});"
 								],
 								"type": "text/javascript"
@@ -160,6 +168,44 @@
 					"response": []
 				},
 				{
+					"name": "Get Store by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/stores/{{store_id}}/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "stores", "{{store_id}}", ""]
+						}
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has store data\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('id');",
+									"    pm.expect(jsonData).to.have.property('name');",
+									"    pm.expect(jsonData).to.have.property('address');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					]
+				},
+				{
 					"name": "Create Store",
 					"request": {
 						"method": "POST",
@@ -197,6 +243,52 @@
 									"    var jsonData = pm.response.json();",
 									"    pm.expect(jsonData).to.have.property('id');",
 									"    pm.environment.set('store_id', jsonData.id);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					]
+				},
+				{
+					"name": "Update Store",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Mi Tienda Actualizada\",\n    \"address\": \"456 Nueva Dirección, Ciudad\",\n    \"latitude\": 40.7589,\n    \"longitude\": -73.9851,\n    \"is_active\": true\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/stores/{{store_id}}/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "stores", "{{store_id}}", ""]
+						}
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has updated store data\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('id');",
+									"    pm.expect(jsonData).to.have.property('name');",
+									"    pm.expect(jsonData).to.have.property('address');",
 									"});"
 								],
 								"type": "text/javascript"
@@ -377,6 +469,52 @@
 							}
 						}
 					]
+				},
+				{
+					"name": "Update Product",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"store\": {{store_id}},\n    \"name\": \"Producto Actualizado\",\n    \"description\": \"Descripción actualizada del producto\",\n    \"original_price\": \"129.99\",\n    \"is_available\": true\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/products/{{product_id}}/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "products", "{{product_id}}", ""]
+						}
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has updated product data\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('id');",
+									"    pm.expect(jsonData).to.have.property('name');",
+									"    pm.expect(jsonData).to.have.property('original_price');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					]
 				}
 			]
 		},
@@ -421,6 +559,49 @@
 					]
 				},
 				{
+					"name": "Get Flash Promo by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/flash-promos/{{flash_promo_id}}/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "flash-promos", "{{flash_promo_id}}", ""]
+						}
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has flash promo data\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('id');",
+									"    pm.expect(jsonData).to.have.property('promo_price');",
+									"    pm.expect(jsonData).to.have.property('start_time');",
+									"    pm.expect(jsonData).to.have.property('end_time');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					]
+				},
+				{
 					"name": "Create Flash Promo",
 					"request": {
 						"method": "POST",
@@ -436,7 +617,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"product\": {{product_id}},\n    \"flash_price\": \"49.99\",\n    \"start_time\": \"14:00:00\",\n    \"end_time\": \"16:00:00\",\n    \"max_quantity\": 10,\n    \"is_active\": true\n}"
+							"raw": "{\n    \"product\": {{product_id}},\n    \"promo_price\": \"49.99\",\n    \"start_time\": \"14:00:00\",\n    \"end_time\": \"16:00:00\",\n    \"eligible_segments\": [\"new_users\", \"frequent_buyers\"],\n    \"is_active\": true\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/api/flash-promos/",
@@ -464,6 +645,51 @@
 							}
 						}
 					]
+				},
+				{
+					"name": "Update Flash Promo",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"product\": {{product_id}},\n    \"promo_price\": \"39.99\",\n    \"start_time\": \"15:00:00\",\n    \"end_time\": \"17:00:00\",\n    \"eligible_segments\": [\"new_users\"],\n    \"is_active\": true\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/flash-promos/{{flash_promo_id}}/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "flash-promos", "{{flash_promo_id}}", ""]
+						}
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has updated flash promo data\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('id');",
+									"    pm.expect(jsonData).to.have.property('promo_price');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					]
 				}
 			]
 		},
@@ -472,7 +698,7 @@
 			"description": "APIs para gestión de notificaciones",
 			"item": [
 				{
-					"name": "Get Notification Stats",
+					"name": "Get Store Notification Stats",
 					"request": {
 						"method": "GET",
 						"header": [
@@ -482,15 +708,9 @@
 							}
 						],
 						"url": {
-							"raw": "{{base_url}}/api/notifications/stats/?store_id={{store_id}}",
+							"raw": "{{base_url}}/api/notifications/store_stats/",
 							"host": ["{{base_url}}"],
-							"path": ["api", "notifications", "stats", ""],
-							"query": [
-								{
-									"key": "store_id",
-									"value": "{{store_id}}"
-								}
-							]
+							"path": ["api", "notifications", "store_stats", ""]
 						}
 					},
 					"response": [],
@@ -505,9 +725,18 @@
 									"",
 									"pm.test(\"Response has notification stats\", function () {",
 									"    var jsonData = pm.response.json();",
-									"    pm.expect(jsonData).to.have.property('total_notifications');",
-									"    pm.expect(jsonData).to.have.property('successful_deliveries');",
-									"    pm.expect(jsonData).to.have.property('failed_deliveries');",
+									"    pm.expect(jsonData).to.have.property('store_id');",
+									"    pm.expect(jsonData).to.have.property('store_name');",
+									"    pm.expect(jsonData).to.have.property('total_notifications_sent');",
+									"    pm.expect(jsonData).to.have.property('period_days');",
+									"    pm.expect(jsonData).to.have.property('start_date');",
+									"    pm.expect(jsonData).to.have.property('end_date');",
+									"    pm.expect(jsonData).to.have.property('notifications_by_status');",
+									"    pm.expect(jsonData).to.have.property('unique_users_notified');",
+									"    pm.expect(jsonData).to.have.property('notifications_by_day');",
+									"    pm.expect(jsonData).to.have.property('notifications_by_type');",
+									"    ",
+									"    console.log('✅ Store stats retrieved successfully');",
 									"});"
 								],
 								"type": "text/javascript"
@@ -558,6 +787,18 @@
 			"key": "flash_promo_id",
 			"value": "",
 			"type": "string"
+		},
+		{
+			"key": "login_username",
+			"value": "owner_1",
+			"type": "string",
+			"description": "Username para login (owner_1, owner_2, owner_3, regular_user_1, etc.)"
+		},
+		{
+			"key": "login_password",
+			"value": "ownerpass123",
+			"type": "string",
+			"description": "Password para login (ownerpass123 para owners, userpass123 para users)"
 		}
 	]
 }
